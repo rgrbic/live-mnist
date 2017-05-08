@@ -57,5 +57,5 @@ dependencies:
   - backports.shutil-get-terminal-size==1.0.0
   - ipython-genutils==0.1.0
   - prompt-toolkit==1.0.9
-prefix: //anaconda/envs/webcam
+prefix: //anaconda/envs/live_mnist
 
