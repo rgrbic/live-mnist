@@ -1,4 +1,4 @@
-name: webcam
+name: live_mnist
 channels: !!python/tuple
 - conda-forge
 - defaults
