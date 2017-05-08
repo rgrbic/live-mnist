@@ -1,12 +1,18 @@
 # live_mnist
 MNIST Live - Run Digit Recognition powered by a Conv Net using live video feed your webcam. The script uses a convolutional neural network in keras plus some adaptive treshholding and contours in open cv.
 
-To run the main script first clone the repo, then create a conda environment with all the dependendencies (this might take a while since the script uses both keras and open cv) and then run the `live_mnist.py` script. It will take a few seconds for the webcam to start.
+To run the code on your machine, first clone the repo,
 
     git clone https://github.com/apapiu/live_mnist.git
     cd live_mnist
+    
+now create a conda environment with all the dependendencies (this might take a while since the script uses both keras and open cv)
 
     conda env create -f environment.yml
+    source activate live_mnist
+    
+Finally, run the `live_mnist.py` script. It will take a few seconds for the webcam to start:
+
     python live_mnist.py
 
 
