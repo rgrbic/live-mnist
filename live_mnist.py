@@ -1,4 +1,3 @@
-#
 """
 use the MNIST set + model to predict on the real world data:
 take an image and do adaptive tresholding and contours to find the digits
@@ -11,6 +10,7 @@ author: Alexandru Papiu, December, 2016, alex.papiu@gmail.com, @apapiu
 
 """
 
+import sys
 import cv2
 import numpy as np
 from keras.models import load_model
@@ -69,10 +69,21 @@ labelz = dict(enumerate(["zero", "one", "two", "three", "four",
 
 
 #main loop:
-for i in range(500):
+
+original = sys.argv[1]
+
+for i in range(1000):
     ret, frame = cp.read(0)
 
+    #final_img is the treshholded image
+    #frame is the original image
+
     final_img = img_to_mnist(frame)
+
+    if original == "orig":
+        image_shown = frame
+    else:
+        image_shown = final_img
 
     _, contours, _ = cv2.findContours(final_img.copy(), cv2.RETR_EXTERNAL,
                                       cv2.CHAIN_APPROX_SIMPLE)
@@ -85,7 +96,7 @@ for i in range(500):
 
         x, y, w, h = rect
 
-        if i >= 50:
+        if i >= 35:
 
             mnist_frame = extract_digit(frame, rect, pad = 15)
 
@@ -94,19 +105,16 @@ for i in range(500):
                 mnist_frame = np.expand_dims(mnist_frame, 0) #needed for keras
 
                 class_prediction = model.predict_classes(mnist_frame, verbose = False)[0]
-                #prediction = np.around(np.max(model.predict(mnist_frame, verbose = False)), 2)
-                #label = str(prediction) - if you want probabilities
+                prediction = np.around(np.max(model.predict(mnist_frame, verbose = False)), 2)
+                label = str(prediction) # if you want probabilities
 
-                #cv2.rectangle(frame, (x - 15, y - 15), (x + 15 + w, y + 15 + h),
-                #              color = (255, 255, 0))
+                cv2.rectangle(image_shown, (x - 15, y - 15), (x + 15 + w, y + 15 + h),
+                              color = (255, 255, 0))
 
                 label = labelz[class_prediction]
 
-                annotate(final_img, label, location = (rect[0], rect[1]))
+                annotate(image_shown, label, location = (rect[0], rect[1]))
 
-
-
-
-    cv2.imshow('frame', final_img)
+    cv2.imshow('frame', image_shown)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
