@@ -7,6 +7,7 @@ great resource + credits for contours and adaptive tresholds:
 http://hanzratech.in/2015/02/24/handwritten-digit-recognition-using-opencv-sklearn-and-python.html
 
 author: Alexandru Papiu, December, 2016, alex.papiu@gmail.com, @apapiu
+Jacob Rafati fixed the bug and trained the MNIST model again and correctly.
 
 """
 
@@ -14,6 +15,8 @@ import sys
 import cv2
 import numpy as np
 from keras.models import load_model
+from keras import backend as K
+
 from sklearn.preprocessing import LabelEncoder
 
 from subprocess import call
@@ -22,11 +25,23 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 cp = cv2.VideoCapture(0)
 cp.set(3, 5*128)
 cp.set(4, 5*128)
-
 SIZE = 28
+img_rows, img_cols = 28, 28
+
+if K.image_data_format() == 'channels_first':
+    input_shape = (1, img_rows, img_cols)
+    first_dim = 0
+    second_dim = 1
+else:
+    input_shape = (img_rows, img_cols, 1)
+    first_dim = 0
+    second_dim = 3
+
+
+
 
 def annotate(frame, label, location = (20,30)):
-    """writes label on image"""
+    #writes label on image#
 
     cv2.putText(frame, label, location, font,
                 fontScale = 0.5,
@@ -51,7 +66,6 @@ def extract_digit(frame, rect, pad = 10):
 def img_to_mnist(frame, tresh = 90):
     gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray_img = cv2.GaussianBlur(gray_img, (5, 5), 0)
-
     #adaptive here does better with variable lighting:
     gray_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                      cv2.THRESH_BINARY_INV, blockSize = 321, C = 28)
@@ -68,23 +82,11 @@ labelz = dict(enumerate(["zero", "one", "two", "three", "four",
                          "five", "six", "seven", "eight", "nine"]))
 
 
-#main loop:
-
-original = sys.argv[1]
-
 for i in range(1000):
     ret, frame = cp.read(0)
 
-    #final_img is the treshholded image
-    #frame is the original image
-
     final_img = img_to_mnist(frame)
-
-    if original == "orig":
-        image_shown = frame
-    else:
-        image_shown = final_img
-
+    image_shown = frame
     _, contours, _ = cv2.findContours(final_img.copy(), cv2.RETR_EXTERNAL,
                                       cv2.CHAIN_APPROX_SIMPLE)
 
@@ -96,13 +98,13 @@ for i in range(1000):
 
         x, y, w, h = rect
 
-        if i >= 35:
+        if i >= 0:
 
             mnist_frame = extract_digit(frame, rect, pad = 15)
 
             if mnist_frame is not None: #and i % 25 == 0:
-                mnist_frame = np.expand_dims(mnist_frame, 0) #needed for keras
-                mnist_frame = np.expand_dims(mnist_frame, 0) #needed for keras
+                mnist_frame = np.expand_dims(mnist_frame, first_dim) #needed for keras
+                mnist_frame = np.expand_dims(mnist_frame, second_dim) #needed for keras
 
                 class_prediction = model.predict_classes(mnist_frame, verbose = False)[0]
                 prediction = np.around(np.max(model.predict(mnist_frame, verbose = False)), 2)
