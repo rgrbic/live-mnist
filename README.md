@@ -27,5 +27,5 @@ The tresholded rectangles is what the CNN actually sees sees and was done so tha
 There is a basic CNN in this repo that gets loaded automatically using keras in the script - however you can play around with training your own - take a look at the `train_model.py` script for the architecture. It will take around 700 seconds on a Macbook Pro to get over 99% accuracy.
 
 
-### Webcam output - Trehsolded versus original image:
-![](129.png)
+### Webcam output - Happy because of detection:
+![](happy-detect.png)
