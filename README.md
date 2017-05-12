@@ -28,4 +28,4 @@ There is a basic CNN in this repo that gets loaded automatically using keras in 
 
 
 ### Webcam output - Trehsolded versus original image:
-![](digits_img.png)
+![](129.png)
