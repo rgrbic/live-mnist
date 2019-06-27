@@ -56,7 +56,7 @@ def annotate(frame, label, location = (20,30)):
 
     cv2.putText(frame, label, location, font,
                 fontScale = 0.5,
-                color = (255, 255, 0),
+                color = (255, 0, 0),
                 thickness =  1,
                 lineType =  cv2.LINE_AA)
 
@@ -101,7 +101,8 @@ model = load_model("full_model.mnist")
 labelz = dict(enumerate(["zero", "one", "two", "three", "four",
                          "five", "six", "seven", "eight", "nine"]))
 
-
+cv2.namedWindow("frame", cv2.WINDOW_NORMAL)   
+cv2.namedWindow("threshold", cv2.WINDOW_NORMAL)   
 while True:
     ret, frame = cp.read(0)
 
@@ -135,7 +136,7 @@ while True:
             annotate(image_shown, labelClass, location = (rect[0], rect[1]))
 
     cv2.imshow('frame', image_shown)
-    cv2.imshow('thresholded', final_img)
+    cv2.imshow('threshold', final_img)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
