@@ -16,10 +16,9 @@ import cv2
 import numpy as np
 from keras.models import load_model
 from keras import backend as K
-
 from sklearn.preprocessing import LabelEncoder
-
 from subprocess import call
+
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 cp = cv2.VideoCapture(0)
@@ -27,6 +26,8 @@ cp.set(3, 5*128)
 cp.set(4, 5*128)
 SIZE = 28
 img_rows, img_cols = 28, 28
+
+kernel = np.ones((5,5), np.uint8) 
 
 if K.image_data_format() == 'channels_first':
     input_shape = (1, img_rows, img_cols)
@@ -38,7 +39,17 @@ else:
     second_dim = 3
 
 
-
+def auto_canny(image, sigma=0.33):
+	# compute the median of the single channel pixel intensities
+	v = np.median(image)
+ 
+	# apply automatic Canny edge detection using the computed median
+	lower = int(max(0, (1.0 - sigma) * v))
+	upper = int(min(255, (1.0 + sigma) * v))
+	edged = cv2.Canny(image, lower, upper)
+ 
+	# return the edged image
+	return edged
 
 def annotate(frame, label, location = (20,30)):
     #writes label on image#
@@ -63,14 +74,23 @@ def extract_digit(frame, rect, pad = 10):
     return cropped_digit
 
 
-def img_to_mnist(frame, tresh = 90):
+def img_to_mnist(frame, tresh = 70):
     gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray_img = cv2.GaussianBlur(gray_img, (5, 5), 0)
+
     #adaptive here does better with variable lighting:
     gray_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                      cv2.THRESH_BINARY_INV, blockSize = 321, C = 28)
 
     return gray_img
+
+def img_to_mnist_dilate(frame):
+    gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    gray_img = cv2.GaussianBlur(gray_img, (5, 5), 0)
+    edge_img = auto_canny(gray_img)
+    img_dilation = cv2.dilate(edge_img, kernel, iterations=1)
+
+    return img_dilation
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,10 +102,10 @@ labelz = dict(enumerate(["zero", "one", "two", "three", "four",
                          "five", "six", "seven", "eight", "nine"]))
 
 
-for i in range(1000):
+while True:
     ret, frame = cp.read(0)
 
-    final_img = img_to_mnist(frame)
+    final_img = img_to_mnist_dilate(frame)
     image_shown = frame
     _, contours, _ = cv2.findContours(final_img.copy(), cv2.RETR_EXTERNAL,
                                       cv2.CHAIN_APPROX_SIMPLE)
@@ -97,26 +117,25 @@ for i in range(1000):
     for rect in rects:
 
         x, y, w, h = rect
-
-        if i >= 0:
-
-            mnist_frame = extract_digit(frame, rect, pad = 15)
-
-            if mnist_frame is not None: #and i % 25 == 0:
-                mnist_frame = np.expand_dims(mnist_frame, first_dim) #needed for keras
-                mnist_frame = np.expand_dims(mnist_frame, second_dim) #needed for keras
-
-                class_prediction = model.predict_classes(mnist_frame, verbose = False)[0]
-                prediction = np.around(np.max(model.predict(mnist_frame, verbose = False)), 2)
-                label = str(prediction) # if you want probabilities
-
-                cv2.rectangle(image_shown, (x - 15, y - 15), (x + 15 + w, y + 15 + h),
-                              color = (255, 255, 0))
-
-                label = labelz[class_prediction]
-
-                annotate(image_shown, label, location = (rect[0], rect[1]))
+        
+        mnist_frame = extract_digit(frame, rect, pad = 15)
+        
+        if mnist_frame is not None: #and i % 25 == 0:
+            mnist_frame = np.expand_dims(mnist_frame, first_dim) #needed for keras
+            mnist_frame = np.expand_dims(mnist_frame, second_dim) #needed for keras
+            
+            class_prediction = model.predict_classes(mnist_frame, verbose = False)[0]
+            prediction = np.around(np.max(model.predict(mnist_frame, verbose = False)), 2)
+            label = str(prediction) # if you want probabilities
+            
+            cv2.rectangle(image_shown, (x - 15, y - 15), (x + 15 + w, y + 15 + h), color = (255, 255, 0))
+            
+            labelClass = labelz[class_prediction]
+            
+            annotate(image_shown, labelClass, location = (rect[0], rect[1]))
 
     cv2.imshow('frame', image_shown)
+    cv2.imshow('thresholded', final_img)
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
