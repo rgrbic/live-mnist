@@ -106,37 +106,45 @@ cv2.namedWindow("threshold", cv2.WINDOW_NORMAL)
 while True:
     ret, frame = cp.read(0)
 
-    final_img = img_to_mnist_dilate(frame)
-    image_shown = frame
-    _, contours, _ = cv2.findContours(final_img.copy(), cv2.RETR_EXTERNAL,
-                                      cv2.CHAIN_APPROX_SIMPLE)
+    if ret == True:
 
-    rects = [cv2.boundingRect(contour) for contour in contours]
-    rects = [rect for rect in rects if rect[2] >= 3 and rect[3] >= 8]
+        final_img = img_to_mnist_dilate(frame)
+        image_shown = frame
+        _, contours, _ = cv2.findContours(final_img.copy(), cv2.RETR_EXTERNAL,
+                                        cv2.CHAIN_APPROX_SIMPLE)
 
-    #draw rectangles and predict:
-    for rect in rects:
+        rects = [cv2.boundingRect(contour) for contour in contours]
+        rects = [rect for rect in rects if rect[2] >= 3 and rect[3] >= 8]
 
-        x, y, w, h = rect
-        
-        mnist_frame = extract_digit(frame, rect, pad = 15)
-        
-        if mnist_frame is not None: #and i % 25 == 0:
-            mnist_frame = np.expand_dims(mnist_frame, first_dim) #needed for keras
-            mnist_frame = np.expand_dims(mnist_frame, second_dim) #needed for keras
-            
-            class_prediction = model.predict_classes(mnist_frame, verbose = False)[0]
-            prediction = np.around(np.max(model.predict(mnist_frame, verbose = False)), 2)
-            label = str(prediction) # if you want probabilities
-            
-            cv2.rectangle(image_shown, (x - 15, y - 15), (x + 15 + w, y + 15 + h), color = (255, 255, 0))
-            
-            labelClass = labelz[class_prediction]
-            
-            annotate(image_shown, labelClass, location = (rect[0], rect[1]))
+        #draw rectangles and predict:
+        for rect in rects:
 
-    cv2.imshow('frame', image_shown)
-    cv2.imshow('threshold', final_img)
+            x, y, w, h = rect
+            
+            mnist_frame = extract_digit(frame, rect, pad = 15)
+            
+            if mnist_frame is not None: #and i % 25 == 0:
+                mnist_frame = np.expand_dims(mnist_frame, first_dim) #needed for keras
+                mnist_frame = np.expand_dims(mnist_frame, second_dim) #needed for keras
+                
+                class_prediction = model.predict_classes(mnist_frame, verbose = False)[0]
+                prediction = np.around(np.max(model.predict(mnist_frame, verbose = False)), 2)
+                label = str(prediction) # if you want probabilities
+                
+                cv2.rectangle(image_shown, (x - 15, y - 15), (x + 15 + w, y + 15 + h), color = (255, 255, 0))
+                
+                labelClass = labelz[class_prediction]
+                
+                annotate(image_shown, labelClass, location = (rect[0], rect[1]))
+
+        cv2.imshow('frame', image_shown)
+        cv2.imshow('threshold', final_img)
+
+    else:
+        break
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+cv2.destroyAllWindows()
+cp.release()
