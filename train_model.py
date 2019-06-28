@@ -61,6 +61,6 @@ model.compile(loss='categorical_crossentropy', optimizer = "adam", metrics = ["a
 
 
 hist = model.fit(x_train, y_dummy_train,
-                 validation_data = (x_test, y_dummy_test), nb_epoch=5, batch_size=32)
+                 validation_data = (x_test, y_dummy_test), nb_epoch= 10, batch_size=16)
 
 model.save("full_model.mnist")

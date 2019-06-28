@@ -27,7 +27,7 @@ cp.set(4, 5*128)
 SIZE = 28
 img_rows, img_cols = 28, 28
 
-kernel = np.ones((5,5), np.uint8) 
+kernel = np.ones((3,3), np.uint8) 
 
 if K.image_data_format() == 'channels_first':
     input_shape = (1, img_rows, img_cols)
@@ -108,7 +108,7 @@ while True:
 
     if ret == True:
 
-        final_img = img_to_mnist_dilate(frame)
+        final_img = img_to_mnist(frame)
         image_shown = frame
         _, contours, _ = cv2.findContours(final_img.copy(), cv2.RETR_EXTERNAL,
                                         cv2.CHAIN_APPROX_SIMPLE)
